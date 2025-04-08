@@ -1,0 +1,4 @@
+cantools~=40.2.1
+pip~=23.2.1
+paho-mqtt~=2.1.0
+influxdb-client~=1.48.0
