@@ -27,7 +27,7 @@ def on_connect(client, userdata, flags, rc, properties):
 def on_message(client, userdata, msg):
     data = b64decode(msg.payload)
     print(f"Received message on topic {msg.topic}")
-    print(f"Raw payload: {msg.payload}")
+    print(f"Raw payload: {msg.payload}\n")
     for offset in range(0, len(data) - 17 + 1, 17):
         arbitration = ((data[offset] << 8) | data[offset + 1]) & 0x7FF
         can_bus = data[offset + 4] >> 4
@@ -38,12 +38,11 @@ def on_message(client, userdata, msg):
         print(f"arbitration:{arbitration}")
         print(f"can_bus:{can_bus}")
         print(f"dlc:{dlc}")
-        print(f"can_data:{can_data}")
+        print(f"can_data:{can_data.hex()}")
         print(f"timestamp:{timestamp}")
 
         if can_bus not in (0, 1):
             print(f"Skipping unknown CAN bus {can_bus}")
-            continue
 
         if can_bus == 0:
             dbc = dbc1
@@ -56,7 +55,7 @@ def on_message(client, userdata, msg):
             print(f"Signals: {signals}")
             writer.write(msg_name, f"canbus{can_bus}", signals, timestamp)
         else:
-            print(f"Unknown arbitration ID: {arbitration}")
+            print(f"Unknown arbitration ID: {arbitration}\n")
 
 client = create_client(on_connect, on_message)
 client.username_pw_set(config.MQTT.get("username"), config.MQTT.get("password"))
