@@ -1,13 +1,8 @@
 import base64
 from base64 import b64decode
-
-# from encodings.base64_codec import base64_decode
-
 from mqtt.client import create_client
 from canbus.dbc_loader import load_dbc
 from influxDB.writer import InfluxDBWriter
-from canbus.parser import decode_can_message
-import struct
 import config
 
 dbc1 = load_dbc(config.DBC.get("file1"))
