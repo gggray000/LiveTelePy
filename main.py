@@ -33,12 +33,13 @@ def on_message(client, userdata, msg):
         can_bus = data[offset + 4] >> 4
         dlc = data[offset + 4] & 0x0F
         can_data = data[offset + 5: offset + 5 + dlc]
-        timestamp = struct.unpack(">i", data[offset + 13:offset + 17])[0]
+        timestamp = (data[offset + 13] << 24) | (data[offset + 14] << 16) | (data[offset + 15] << 8) | data[offset + 16];
+
 
         print(f"arbitration:{arbitration}")
         print(f"can_bus:{can_bus}")
         print(f"dlc:{dlc}")
-        print(f"can_data:{can_data.hex()}")
+        print("can_data:", " ".join(f"{byte:02x}" for byte in can_data))
         print(f"timestamp:{timestamp}")
 
         if can_bus not in (0, 1):
