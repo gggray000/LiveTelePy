@@ -7,3 +7,6 @@
 
 RP24e_CAN1.dbc
 RP24e_CAN3.dbc
+
+.DS_Store
+*.pyc
