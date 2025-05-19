@@ -10,7 +10,7 @@ import config
 dbc1 = load_dbc(config.DBC.get("file1"))
 dbc3 = load_dbc(config.DBC.get("file3"))
 
-#writer = InfluxDBWriter(config.INFLUX_REPLAY)
+writer = InfluxDBWriter(config.INFLUX_REPLAY)
 
 def process_payload(payload_bytes):
     for offset in range(0, len(payload_bytes) - 17 + 1, 17):
@@ -45,7 +45,7 @@ def process_payload(payload_bytes):
         try:
             signals = msg_def.decode(can_data, allow_truncated=True)
             print(f"Message: {msg_def.name} => Signals: {signals}")
-            #writer.write(msg_def.name, f"canbus{can_bus}", signals, timestamp)
+            writer.write(msg_def.name, f"canbus{can_bus}", signals, timestamp)
         except DecodeError as e:
             print(f"DecodeError for ID {arbitration}: {e}")
 
