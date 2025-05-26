@@ -8,6 +8,7 @@ import config
 
 # Load DBCs
 dbc1 = load_dbc(config.DBC.get("file1"))
+dbc2 = load_dbc(config.DBC.get("file2"))
 dbc3 = load_dbc(config.DBC.get("file3"))
 
 writer = InfluxDBWriter(config.INFLUX_REPLAY)
@@ -28,11 +29,18 @@ def process_payload(payload_bytes):
         print(f"\n[CAN BUS {can_bus}] ID: {arbitration}, DLC: {dlc}, Timestamp: {timestamp}")
         print("Data:", " ".join(f"{byte:02x}" for byte in can_data))
 
-        if can_bus not in (0, 1):
-            print(f"Unknown CAN bus {can_bus}, skipping.")
-            continue
+        # if can_bus not in (0, 1):
+        #     print(f"Unknown CAN bus {can_bus}, skipping.")
+        #     continue
 
-        dbc = dbc1 if can_bus == 0 else dbc3
+        match can_bus:
+            case 0:
+                dbc = dbc1
+            case 1:
+                dbc = dbc3
+            case _:
+                dbc = dbc2
+
         msg_def = dbc._frame_id_to_message.get(arbitration)
         if not msg_def:
             print(f"No message definition for ID {arbitration}, skipping.")
@@ -56,14 +64,18 @@ def main(json_path):
     for client in clients:
         messages = client.get("messages", [])
         for msg in messages:
-            # Try the most likely place first
             payload_base64 = msg.get("payload") or msg.get("properties", {}).get("payload")
             if not payload_base64:
                 print("No payload found in message, skipping.")
                 continue
 
             try:
+                print("\nRaw payload: " + payload_base64)
                 payload_bytes = base64.b64decode(payload_base64)
+                print("\nPayload after base64 decoding: ")
+                print(payload_bytes)
+                print("\nPayload containins messages: ")
+                print({len(payload_bytes)/17})
                 process_payload(payload_bytes)
             except Exception as e:
                 print(f"Failed to process payload: {e}")
