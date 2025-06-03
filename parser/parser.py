@@ -1,4 +1,3 @@
-from typing import List
 from messages.types import *
 import cantools
 

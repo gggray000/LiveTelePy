@@ -10,6 +10,15 @@ import config
 dbcs: List[str] = [config.DBC.get("file1"), config.DBC.get("file2"), config.DBC.get("file3")]
 messageParser = MessageParser(dbcs)
 
+influx_config = InfluxdbConfig(
+    config.INFLUX_REPLAY.get("token"),
+    config.INFLUX_REPLAY.get("org"),
+    config.INFLUX_REPLAY.get("url"),
+    config.INFLUX_REPLAY.get("bucket")
+)
+
+writer = InfluxDBWriter(influx_config)
+
 def main(json_path, mqtt_msg=None):
     with open(json_path, 'r') as f:
         clients = json.load(f)
@@ -27,8 +36,7 @@ def main(json_path, mqtt_msg=None):
                 payload_bytes = base64.b64decode(payload_base64)
                 print("\nPayload after base64 decoding: ")
                 print(payload_bytes)
-                print("\nPayload containins messages: ")
-                print({len(payload_bytes)/17})
+                print(f"\nPayload containins messages: {len(payload_bytes)/17}")
 
                 mock_mqtt_msg = MqttMessage(
                     payload=payload_bytes,
@@ -39,8 +47,11 @@ def main(json_path, mqtt_msg=None):
                 influx_msgs = messageParser.decode_can_message(
                     messageParser.convert_mqtt_to_can(mock_mqtt_msg)
                 )
+                writer.write(influx_msgs)
+
                 for influx_msg in influx_msgs:
-                    print(f"\nInflux msg: {influx_msg}")
+                    print(influx_msg)
+
 
             except Exception as e:
                 print(f"Failed to process payload: {e}")

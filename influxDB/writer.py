@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 import influxdb_client
+from cantools.database.namedsignalvalue import NamedSignalValue
 from influxdb_client import Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 from messages.types import InfluxMessage
@@ -29,9 +30,13 @@ class InfluxDBWriter:
     def write(self, msgs: List[InfluxMessage]):
         for msg in msgs:
             for sig, val in msg.signals.items():
+                if isinstance(val, NamedSignalValue):
+                    val = float(val.value)
+                elif isinstance(val, int):
+                    val = float(val)
                 point = (
                         Point(msg.name)
-                        .field(sig, float(val))
-                        .time(msg.timestamp)
+                        .field(sig, val)
+                        .time(None)
                         )
                 self.write_api.write(bucket=self.bucket, record=point)
