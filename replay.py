@@ -1,63 +1,16 @@
-import json
 import base64
-from pathlib import Path
-from canbus.dbc_loader import load_dbc
-from influxDB.writer import InfluxDBWriter
-from cantools.database.errors import DecodeError
+import json
+
+from typing import List
+from influxDB.writer import InfluxdbConfig, InfluxDBWriter
+from messages.types import MqttMessage
+from parser.parser import MessageParser
 import config
 
-# Load DBCs
-dbc1 = load_dbc(config.DBC.get("file1"))
-dbc2 = load_dbc(config.DBC.get("file2"))
-dbc3 = load_dbc(config.DBC.get("file3"))
+dbcs: List[str] = [config.DBC.get("file1"), config.DBC.get("file2"), config.DBC.get("file3")]
+messageParser = MessageParser(dbcs)
 
-writer = InfluxDBWriter(config.INFLUX_REPLAY)
-
-def process_payload(payload_bytes):
-    for offset in range(0, len(payload_bytes) - 17 + 1, 17):
-        arbitration = ((payload_bytes[offset] << 8) | payload_bytes[offset + 1]) & 0x7FF
-        can_bus = payload_bytes[offset + 4] >> 4
-        dlc = payload_bytes[offset + 4] & 0x0F
-        can_data = payload_bytes[offset + 5: offset + 5 + dlc]
-        timestamp = (
-            (payload_bytes[offset + 13] << 24) |
-            (payload_bytes[offset + 14] << 16) |
-            (payload_bytes[offset + 15] << 8) |
-            payload_bytes[offset + 16]
-        )
-
-        print(f"\n[CAN BUS {can_bus}] ID: {arbitration}, DLC: {dlc}, Timestamp: {timestamp}")
-        print("Data:", " ".join(f"{byte:02x}" for byte in can_data))
-
-        # if can_bus not in (0, 1):
-        #     print(f"Unknown CAN bus {can_bus}, skipping.")
-        #     continue
-
-        match can_bus:
-            case 0:
-                dbc = dbc1
-            case 1:
-                dbc = dbc3
-            case _:
-                dbc = dbc2
-
-        msg_def = dbc._frame_id_to_message.get(arbitration)
-        if not msg_def:
-            print(f"No message definition for ID {arbitration}, skipping.")
-            continue
-
-        if len(can_data) < msg_def.length:
-            print(f"Truncated data for ID {arbitration}, skipping.")
-            continue
-
-        try:
-            signals = msg_def.decode(can_data, allow_truncated=True)
-            print(f"Message: {msg_def.name} => Signals: {signals}")
-            writer.write(msg_def.name, f"canbus{can_bus}", signals, timestamp)
-        except DecodeError as e:
-            print(f"DecodeError for ID {arbitration}: {e}")
-
-def main(json_path):
+def main(json_path, mqtt_msg=None):
     with open(json_path, 'r') as f:
         clients = json.load(f)
 
@@ -66,7 +19,7 @@ def main(json_path):
         for msg in messages:
             payload_base64 = msg.get("payload") or msg.get("properties", {}).get("payload")
             if not payload_base64:
-                print("No payload found in message, skipping.")
+                print("No payload found in messages, skipping.")
                 continue
 
             try:
@@ -76,15 +29,21 @@ def main(json_path):
                 print(payload_bytes)
                 print("\nPayload containins messages: ")
                 print({len(payload_bytes)/17})
-                process_payload(payload_bytes)
+
+                mock_mqtt_msg = MqttMessage(
+                    payload=payload_bytes,
+                    topic=msg.get("topic", ""),
+                    timestamp=msg.get("timestamp", 0)
+                )
+
+                influx_msgs = messageParser.decode_can_message(
+                    messageParser.convert_mqtt_to_can(mock_mqtt_msg)
+                )
+                for influx_msg in influx_msgs:
+                    print(f"\nInflux msg: {influx_msg}")
+
             except Exception as e:
                 print(f"Failed to process payload: {e}")
 
 if __name__ == "__main__":
-    # import sys
-    # if len(sys.argv) != 2:
-    #     print("Usage: python replay_from_json.py <path_to_json_file>")
-    #     exit(1)
-    #
-    # main(Path(sys.argv[1]))
     main("/Users/ganruilin/Desktop/LiveTele/test_17_05.json")
