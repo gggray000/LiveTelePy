@@ -22,12 +22,13 @@ class MessageParser:
         can_msgs = []
         for mqtt_msg in mqtt_msgs:
             can_msg = CanMessage()
-            can_msg.timestamp = mqtt_msg.timestamp
+            can_msg.timestamp = (int.from_bytes(mqtt_msg.payload[13:17],'little'))/1000
             can_msg.msg_id = int.from_bytes(mqtt_msg.payload[0:4], 'little')
             can_msg.dlc = int.from_bytes(mqtt_msg.payload[4:5], 'little')
             can_msg.can_bus = can_msg.dlc >> 4
             can_msg.dlc &= 15
-            can_msg.data = mqtt_msg.payload
+            can_msg.data = mqtt_msg.payload[5:13]
+
             can_msgs.append(can_msg)
 
         return can_msgs
