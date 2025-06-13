@@ -8,10 +8,10 @@ dbcs: List[str] = [config.DBC.get("file1"), config.DBC.get("file2"), config.DBC.
 messageParser = MessageParser(dbcs)
 
 influx_config = InfluxdbConfig(
-    config.INFLUX.get("token"),
-    config.INFLUX.get("org"),
-    config.INFLUX.get("url"),
-    config.INFLUX.get("bucket")
+    config.INFLUX_DYNAMICS.get("token"),
+    config.INFLUX_DYNAMICS.get("org"),
+    config.INFLUX_DYNAMICS.get("url"),
+    config.INFLUX_DYNAMICS.get("bucket")
 )
 
 writer = InfluxDBWriter(influx_config)
@@ -23,9 +23,9 @@ credentials = MqttCredentials(
     config.MQTT.get("password"),
 )
 
-client = MqttClient(credentials, config.MQTT.get("topic"))
+client = MqttClient(credentials, config.MQTT.get("topics"))
 
-# mqtt payload -> list[MqttMessage] -> list[CanMessage] -> List[InfluxMessage] -> IndluxDB points
+# mqtt payload -> list[MqttMessage] -> list[CanMessage] -> List[InfluxMessage] -> InfluxDB points
 client.add_callback(
     lambda msg: 
     writer.write(
@@ -34,3 +34,5 @@ client.add_callback(
          )  
     )
 )
+
+client.connect()

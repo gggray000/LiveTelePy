@@ -24,7 +24,12 @@ class InfluxDBWriter:
         self.org = config.org
         self.url = config.url
         self.bucket = config.bucket
-        write_client = influxdb_client.InfluxDBClient(url=self.url, token=self.token, org=self.org)
+        write_client = influxdb_client.InfluxDBClient(url=self.url, token=self.token, org=self.org, verify_ssl=False)
+        connected = write_client.ping()
+        if connected:
+            print("Connected to InfluxDB.")
+        else:
+            print(f"Connection failed.")
         self.write_api = write_client.write_api(write_options=SYNCHRONOUS)
 
     def write(self, msgs: List[InfluxMessage]):
@@ -37,6 +42,6 @@ class InfluxDBWriter:
                 point = (
                         Point(msg.name)
                         .field(sig, val)
-                        .time(None)
+                        .time(msg.timestamp)
                         )
                 self.write_api.write(bucket=self.bucket, record=point)

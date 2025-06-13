@@ -51,7 +51,7 @@ class MqttClient:
     def stop(self) -> None:
         self.client.loop_stop()
 
-    def on_connect(self, rc):
+    def on_connect(self, client, userdata, flags, rc):
         if rc == 0:
             print("Connected to MQTT server.")
             self.subscribe_all_topics()
