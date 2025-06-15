@@ -1,3 +1,6 @@
+from datetime import datetime, timedelta
+from pkg_resources import SOURCE_DIST
+import pytz
 from messages.types import *
 import cantools
 
@@ -22,7 +25,12 @@ class MessageParser:
         can_msgs = []
         for mqtt_msg in mqtt_msgs:
             can_msg = CanMessage()
-            can_msg.timestamp = (int.from_bytes(mqtt_msg.payload[13:17],'little'))/1000
+            timestamp_ms = int.from_bytes(mqtt_msg.payload[13:17],'little')
+            print(timestamp_ms)
+            current_time = datetime.now(pytz.utc).replace(hour=17, minute=0, second=0, microsecond=0)
+            print(current_time)
+            can_msg.timestamp = (current_time + timedelta(milliseconds=timestamp_ms)).isoformat()
+            print(can_msg.timestamp)
             can_msg.msg_id = int.from_bytes(mqtt_msg.payload[0:4], 'little')
             can_msg.dlc = int.from_bytes(mqtt_msg.payload[4:5], 'little')
             can_msg.can_bus = can_msg.dlc >> 4
@@ -42,6 +50,7 @@ class MessageParser:
                 influx_msg.name = decoded.name
                 influx_msg.signals = decoded.decode(can_msg.data)
                 influx_msg.timestamp = can_msg.timestamp
+                print(influx_msg.timestamp)
                 influx_msgs.append(influx_msg)
                 
             except Exception as e:

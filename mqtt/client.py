@@ -58,7 +58,7 @@ class MqttClient:
         else:
             print("Connection failed")
 
-    def on_message(self, message: mqtt.MQTTMessage) -> None:
+    def on_message(self, client, userdata, message: mqtt.MQTTMessage) -> None:
 
         msg = MqttMessage()
         msg.timestamp = message.timestamp

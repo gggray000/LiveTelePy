@@ -44,4 +44,4 @@ class InfluxDBWriter:
                         .field(sig, val)
                         .time(msg.timestamp)
                         )
-                self.write_api.write(bucket=self.bucket, record=point)
+                self.write_api.write(bucket=self.bucket, record=point, write_precision='ns')
