@@ -1,3 +1,4 @@
+import argparse
 import base64
 import json
 
@@ -6,6 +7,10 @@ from influxDB.writer import InfluxdbConfig, InfluxDBWriter
 from messages.types import MqttMessage
 from parser.parser import MessageParser
 import config
+import urllib3
+
+# TODO: Resolve SSL issue
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 dbcs: List[str] = [config.DBC.get("file1"), config.DBC.get("file2"), config.DBC.get("file3")]
 messageParser = MessageParser(dbcs)
@@ -36,7 +41,7 @@ def main(json_path, mqtt_msg=None):
                 payload_bytes = base64.b64decode(payload_base64)
                 print("\nPayload after base64 decoding: ")
                 print(payload_bytes)
-                print(f"\nPayload containins messages: {len(payload_bytes)/17}")
+                print(f"\nPayload contains messages: {len(payload_bytes)/17}")
 
                 mock_mqtt_msg = MqttMessage(
                     payload=payload_bytes,
@@ -52,9 +57,12 @@ def main(json_path, mqtt_msg=None):
                 for influx_msg in influx_msgs:
                     print(influx_msg)
 
-
             except Exception as e:
                 print(f"Failed to process payload: {e}")
 
 if __name__ == "__main__":
-    main("/Users/ganruilin/Desktop/LiveTele/test_17_05.json")
+    parser = argparse.ArgumentParser(description="Write logged MQTT messages to InfluxDB from a JSON file")
+    parser.add_argument("json_path", help="Path to the JSON file")
+    args = parser.parse_args()
+
+    main(args.json_path)

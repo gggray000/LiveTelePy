@@ -25,11 +25,12 @@ class MessageParser:
         can_msgs = []
         for mqtt_msg in mqtt_msgs:
             can_msg = CanMessage()
-            timestamp_ms = int.from_bytes(mqtt_msg.payload[13:17],'little')
-            print(timestamp_ms)
-            current_time = datetime.now(pytz.utc).replace(hour=17, minute=0, second=0, microsecond=0)
-            print(current_time)
-            can_msg.timestamp = (current_time + timedelta(milliseconds=timestamp_ms)).isoformat()
+            timestamp = (int.from_bytes(mqtt_msg.payload[13:17],'little'))/1000
+            print(timestamp)
+            base_time = datetime(2025, 6, 16, 0, 0, 0, tzinfo=pytz.utc)
+            #current_time = datetime.now(pytz.utc).replace(hour=21, minute=0, second=0, microsecond=0)
+            print(base_time)
+            can_msg.timestamp = base_time + timedelta(seconds=timestamp)
             print(can_msg.timestamp)
             can_msg.msg_id = int.from_bytes(mqtt_msg.payload[0:4], 'little')
             can_msg.dlc = int.from_bytes(mqtt_msg.payload[4:5], 'little')

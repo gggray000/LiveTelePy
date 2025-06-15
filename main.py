@@ -3,6 +3,10 @@ from typing import List
 from influxDB.writer import InfluxdbConfig, InfluxDBWriter
 from parser.parser import MessageParser
 import config
+import urllib3
+
+# TODO: Resolve SSL issue
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 dbcs: List[str] = [config.DBC.get("file1"), config.DBC.get("file2"), config.DBC.get("file3")]
 messageParser = MessageParser(dbcs)

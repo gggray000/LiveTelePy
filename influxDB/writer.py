@@ -39,9 +39,9 @@ class InfluxDBWriter:
                     val = float(val.value)
                 elif isinstance(val, int):
                     val = float(val)
-                point = (
-                        Point(msg.name)
+                point = (Point(msg.name)
                         .field(sig, val)
-                        .time(msg.timestamp)
-                        )
-                self.write_api.write(bucket=self.bucket, record=point, write_precision='ns')
+                        .time(None))
+                
+                print(point.to_line_protocol())
+                self.write_api.write(bucket=self.bucket, record=point)

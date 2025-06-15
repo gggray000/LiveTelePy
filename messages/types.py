@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Dict, Union
 from dataclasses import dataclass, field
 
@@ -29,7 +30,7 @@ class MqttMessage:
 
 @dataclass
 class CanMessage:
-    timestamp: float = field(default=0)
+    timestamp: datetime = field(default=0)
     msg_id: int = field(default=0)
     dlc: int = field(default=0)
     # Different that livetele_applications, because here we decode using DBC files.
@@ -43,7 +44,7 @@ class CanMessage:
 class InfluxMessage:
     name: str = field(default="")
     signals: Dict[str, Union[int, float]] = field(default_factory=dict)
-    timestamp: float = field(default=0)
+    timestamp: datetime = field(default=0)
 
     def __str__(self) -> str:
         return f"Message:{self.name=}\nSignals{self.signals}\n"
