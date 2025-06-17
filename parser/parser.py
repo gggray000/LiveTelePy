@@ -27,10 +27,10 @@ class MessageParser:
             can_msg = CanMessage()
             timestamp = (int.from_bytes(mqtt_msg.payload[13:17],'little'))/1000
             print(timestamp)
-            base_time = datetime(2025, 6, 16, 0, 0, 0, tzinfo=pytz.utc)
-            #current_time = datetime.now(pytz.utc).replace(hour=21, minute=0, second=0, microsecond=0)
+            base_time = datetime(2025, 6, 16, 15, 0, 0, tzinfo=pytz.UTC)
             print(base_time)
-            can_msg.timestamp = base_time + timedelta(seconds=timestamp)
+            dt = base_time + timedelta(seconds=timestamp)
+            can_msg.timestamp = int(dt.timestamp() * 1e9)
             print(can_msg.timestamp)
             can_msg.msg_id = int.from_bytes(mqtt_msg.payload[0:4], 'little')
             can_msg.dlc = int.from_bytes(mqtt_msg.payload[4:5], 'little')

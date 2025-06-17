@@ -1,8 +1,10 @@
 from dataclasses import dataclass
+from sqlite3.dbapi2 import Timestamp
 from typing import List
 import influxdb_client
 from cantools.database.namedsignalvalue import NamedSignalValue
 from influxdb_client import Point
+from influxdb_client.domain.write_precision import WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 from messages.types import InfluxMessage
 
@@ -41,7 +43,7 @@ class InfluxDBWriter:
                     val = float(val)
                 point = (Point(msg.name)
                         .field(sig, val)
-                        .time(None))
+                        .time(msg.timestamp))
                 
                 print(point.to_line_protocol())
-                self.write_api.write(bucket=self.bucket, record=point)
+                self.write_api.write(bucket=self.bucket, record=point, write_precision=WritePrecision.NS)
