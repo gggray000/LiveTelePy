@@ -1,8 +1,6 @@
 # created by virtualenv automatically
 .venv
 
-/config.py
-
 .idea
 
 RP24e_CAN1.dbc
@@ -11,3 +9,5 @@ RP24e_CAN2_Inverter.dbc
 
 .DS_Store
 *.pyc
+
+.env

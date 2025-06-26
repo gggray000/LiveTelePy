@@ -11,6 +11,9 @@ from messages.types import MqttMessage, CanMessage
 from parser.parser import MessageParser
 import config
 import urllib3
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # TODO: Resolve SSL issue
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)

@@ -1,0 +1,73 @@
+stages:
+  - build
+  - deploy
+  
+variables:
+  #Namings for docker images
+  TARGET: "gitlab.dynamics-regensburg.de:5050/dynamics/electronics/devops"
+  BUILD_IMAGE: "$TARGET/dynamics-build-image"
+  BUILD_RELEASE_IMAGE: "$TARGET/dynamics-build-image:${CI_COMMIT_TAG}"
+  LIVETELE_IMAGE: "$TARGET/dynamics-livetele-image"
+  LIVETELE_RELEASE_IMAGE: "$TARGET/dynamics-livetele-image:${CI_COMMIT_TAG}"
+  #DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+
+
+services:
+  - name: docker:dind
+    alias: docker
+
+docker_build:
+  stage: build
+  image: docker:stable
+  script:
+    - echo -n $DEPLOY_TOKEN_PASSWORD | docker login -u $DEPLOY_TOKEN_USER --password-stdin $CI_REGISTRY
+    - docker build -t $BUILD_IMAGE:dev -f ./Build/build-image.dockerfile .
+    - docker push $BUILD_IMAGE:dev
+  rules:
+  - changes:
+      - Build/build-image.dockerfile
+  interruptible: true
+
+
+docker_livetele:
+  stage: build
+  image: docker:stable
+  script:
+    - echo -n $DEPLOY_TOKEN_PASSWORD | docker login -u $DEPLOY_TOKEN_USER --password-stdin $CI_REGISTRY
+    - docker build -t $LIVETELE_IMAGE:dev -f ./LiveTelePy/livetele-image.dockerfile .
+    - docker push $LIVETELE_IMAGE:dev
+  rules:
+  - changes:
+      - LiveTelePy/livetele-image.dockerfile
+  interruptible: true
+
+build_release:
+  stage: deploy
+  image: docker:stable
+  script:
+    - echo -n $DEPLOY_TOKEN_PASSWORD | docker login -u $DEPLOY_TOKEN_USER --password-stdin $CI_REGISTRY
+    - docker pull $BUILD_IMAGE:dev
+    - docker tag $BUILD_IMAGE:dev $BUILD_RELEASE_IMAGE
+    - docker tag $BUILD_IMAGE:dev $BUILD_IMAGE:latest
+    - docker push $BUILD_IMAGE:latest
+    - docker push $BUILD_RELEASE_IMAGE
+  needs:
+    - docker_build
+  only:
+    - tags
+
+livetele_release:
+  stage: deploy
+  image: docker:stable
+  script:
+    - echo -n $DEPLOY_TOKEN_PASSWORD | docker login -u $DEPLOY_TOKEN_USER --password-stdin $CI_REGISTRY
+    - docker pull $LIVETELE_IMAGE:dev
+    - docker tag $LIVETELE_IMAGE:dev $LIVETELE_RELEASE_IMAGE
+    - docker push $LIVETELE_IMAGE:latest
+    - docker push $LIVETELE_RELEASE_IMAGE
+  needs:
+    - docker_livetele
+  only:
+    - tags
